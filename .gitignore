@@ -1,0 +1,21 @@
+# Data/Datasets
+*.csv
+*.tsv
+*.xlsx
+*.zip
+*.tar.gz
+datasets/
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+
+# Environments
+.env
+.venv/
+venv/
+ENV/
+env/
+__pycache__/
+
+# OS Generated
+.DS_Store
