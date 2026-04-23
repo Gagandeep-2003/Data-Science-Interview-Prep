@@ -323,6 +323,91 @@ GROUP BY department;
 
 ---
 
+## 🔵 Level 5: LeetCode SQL Patterns
+
+### Q21. 🏢 Department Highest Salary (LeetCode 184)
+*Write a SQL query to find employees who have the highest salary in each of the departments.*
+```sql
+WITH MaxSalaryByDept AS (
+    SELECT 
+        department_id,
+        MAX(salary) AS max_salary
+    FROM employee
+    GROUP BY department_id
+)
+SELECT 
+    d.name AS Department,
+    e.name AS Employee,
+    e.salary AS Salary
+FROM employee e
+JOIN department d ON e.department_id = d.id
+JOIN MaxSalaryByDept m ON e.department_id = m.department_id AND e.salary = m.max_salary;
+```
+
+### Q22. 🔢 Consecutive Numbers (LeetCode 180)
+*Write a SQL query to find all numbers that appear at least three times consecutively.*
+```sql
+WITH CTE AS (
+    SELECT 
+        num,
+        LEAD(num, 1) OVER(ORDER BY id) AS next_1,
+        LEAD(num, 2) OVER(ORDER BY id) AS next_2
+    FROM logs
+)
+SELECT DISTINCT num AS ConsecutiveNums
+FROM CTE
+WHERE num = next_1 AND num = next_2;
+```
+
+### Q23. 🏟️ Human Traffic of Stadium (LeetCode 601)
+*Write a SQL query to display the records with three or more rows with consecutive id's, and the number of people is greater than or equal to 100 for each. Return the result table ordered by visit_date in ascending order.*
+```sql
+WITH CTE AS (
+    SELECT 
+        id, visit_date, people,
+        id - ROW_NUMBER() OVER(ORDER BY id) AS grp
+    FROM stadium
+    WHERE people >= 100
+)
+SELECT id, visit_date, people
+FROM CTE
+WHERE grp IN (
+    SELECT grp FROM CTE GROUP BY grp HAVING COUNT(*) >= 3
+)
+ORDER BY visit_date;
+```
+
+### Q24. 🚕 Trips and Users (LeetCode 262)
+*Write a SQL query to find the cancellation rate of requests with unbanned users (both client and driver must not be banned) each day between "2013-10-01" and "2013-10-03".*
+```sql
+SELECT 
+    request_at AS Day,
+    ROUND(SUM(CASE WHEN status != 'completed' THEN 1 ELSE 0 END) / COUNT(*), 2) AS "Cancellation Rate"
+FROM trips t
+JOIN users c ON t.client_id = c.users_id AND c.banned = 'No'
+JOIN users d ON t.driver_id = d.users_id AND d.banned = 'No'
+WHERE request_at BETWEEN '2013-10-01' AND '2013-10-03'
+GROUP BY request_at;
+```
+
+### Q25. 💰 Nth Highest Salary (LeetCode 177)
+*Write a SQL query to report the nth highest salary from the Employee table. If there is no nth highest salary, the query should report null.*
+```sql
+CREATE FUNCTION getNthHighestSalary(N INT) RETURNS INT
+BEGIN
+  DECLARE M INT;
+  SET M = N - 1;
+  RETURN (
+      SELECT DISTINCT salary
+      FROM employee
+      ORDER BY salary DESC
+      LIMIT 1 OFFSET M
+  );
+END
+```
+
+---
+
 ## 📋 Answer Key Summary
 
 | Q# | Concepts Tested | Difficulty |
@@ -331,5 +416,6 @@ GROUP BY department;
 | Q6-Q10 | LEFT JOIN, HAVING, Subquery, Date funcs | 🟡 Intermediate |
 | Q11-Q15 | CTE, ROW_NUMBER, LAG, Window AVG | 🟠 Advanced |
 | Q16-Q20 | Complex CTEs, LATERAL, Median logic | 🔴 Interview |
+| Q21-Q25 | Window Functions, Self Joins, Gaps and Islands | 🔵 LeetCode Patterns |
 
 > **💡 Practice Tip:** Don't just read these — type them out! Muscle memory matters in timed interviews. Load the sample data into [SQLite Online](https://sqliteonline.com/) or [DB Fiddle](https://www.db-fiddle.com/) and practice.
