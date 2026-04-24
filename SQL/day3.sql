@@ -388,17 +388,49 @@ WHERE NOT EXISTS (
 
 
 
+-- without roll up
+SELECT c.city, oi.product,
+       SUM(oi.quantity * oi.price) AS total
+FROM customers c
+JOIN orders o ON c.customer_id = o.customer_id
+JOIN order_items oi ON o.order_id = oi.order_id
+GROUP BY c.city, oi.product;
+
+-- with roll up 
+SELECT c.city, oi.product,
+       SUM(oi.quantity * oi.price) AS total
+FROM customers c
+JOIN orders o ON c.customer_id = o.customer_id
+JOIN order_items oi ON o.order_id = oi.order_id
+GROUP BY ROLLUP(c.city, oi.product);
 
 
+-- GROUPING works
+SELECT c.city, oi.product,
+       SUM(oi.quantity * oi.price) AS total,
+       GROUPING(c.city) AS g_city,
+       GROUPING(oi.product) AS g_product
+FROM customers c
+JOIN orders o ON c.customer_id = o.customer_id
+JOIN order_items oi ON o.order_id = oi.order_id
+GROUP BY ROLLUP(c.city, oi.product);
 
 
+-- PostgreSQL / modern databases (Filter function)
+SELECT c.city,
+       COUNT(*) AS total_orders,
+       COUNT(*) FILTER (WHERE o.amount > 500) AS high_value_orders
+FROM customers c
+JOIN orders o ON c.customer_id = o.customer_id
+GROUP BY c.city;
 
 
-
-
-
-
-
-
-
-
+-- COUNT(*) vs COUNT(col) vs COUNT(DISTINCT)
+SELECT c.city,
+       COUNT(*) AS all_rows,                      -- all rows
+       COUNT(oi.product) AS product_present,      -- skips NULL
+       COUNT(DISTINCT oi.product) AS unique_products
+FROM customers c
+JOIN orders o ON c.customer_id = o.customer_id
+JOIN order_items oi ON o.order_id = oi.order_id
+GROUP BY c.city;
